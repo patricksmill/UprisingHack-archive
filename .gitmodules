@@ -1,0 +1,8 @@
+[submodule "tools/zakuro"]
+	path = tools/zakuro
+	url = https://github.com/patricksmill/zakuro
+	branch = kiu-mouse
+[submodule "tools/3dsrecomp"]
+	path = tools/3dsrecomp
+	url = https://github.com/patricksmill/3dsrecomp
+	branch = kiu

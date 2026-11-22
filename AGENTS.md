@@ -4,8 +4,8 @@ PC recompilation and enhancement project for Kid Icarus: Uprising (USA, 00040000
 
 ## Key Directories & Components
 
-- `tools/3dsrecomp`: upstream recompilation toolchain (Rust).
-- `tools/zakuro`: upstream runtime environment.
+- `tools/3dsrecomp`: submodule, our 3dsrecomp fork (branch `kiu`), the recompilation toolchain (Rust).
+- `tools/zakuro`: submodule, our Zakuro fork (branch `kiu-mouse`), the runtime. Push fork commits before committing a new submodule pointer here; see `docs/BUILDING.md`.
 - `ghidra/`: analysis scripts and headless disassembly pipelines for `code.bin`.
 - `overrides/`: C overrides passed to `3dsrecomp port --overrides overrides/`.
 - `docs/adr/`: architectural and porting decisions.

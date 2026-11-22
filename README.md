@@ -35,7 +35,7 @@ Statically recompiled with [3dsrecomp](tools/3dsrecomp) · runs on a fork of [Za
 
 ### ⚡ Performance
 - **Ahead-of-time recompiled** game code — no JIT warm-up, no interpreter.
-- **60 FPS patch** included (`dist/60fps/code.ips`).
+- **60 FPS patch**, generated from your own `code.bin` by `scripts/make_60fps_ips.py` ([how](docs/BUILDING.md#5-optional-the-60-fps-patch)).
 - Headless benchmark harness to track frame rate across upstream merges.
 
 <!-- SCREENSHOT GRID PLACEHOLDERS: replace each with docs/images/<name>.png -->
@@ -78,13 +78,20 @@ Only a handful of game functions are hooked; everything else runs as the origina
 > [!IMPORTANT]
 > You must provide your own **decrypted** dump of Kid Icarus: Uprising (USA). No game data is included or distributed.
 
-1. Place your dump at `dumps/kiu.cci`.
-2. Build and launch:
+1. Install Rust 1.95+ and, on Linux, the packages listed in [Building](docs/BUILDING.md#1-install-the-prerequisites).
+2. Clone with submodules (the Zakuro and 3dsrecomp forks live in `tools/`):
    ```sh
-   cargo run --release --manifest-path tools/zakuro/Cargo.toml -p zakuro -- dumps/kiu.cci
+   git clone --recursive https://github.com/patricksmill/UprisingHack
+   cd UprisingHack
    ```
-3. Press **Recompile** in the library (once, and again after each update).
-4. Press **F12** in-game for the emulator menu.
+3. Build and launch:
+   ```sh
+   cargo run --release --manifest-path tools/zakuro/Cargo.toml -p zakuro -- path/to/kiu.cci
+   ```
+4. Press **Recompile** in the library. It takes about ten minutes and needs a C compiler (Zakuro offers to download one). Recompile once, and again after each update.
+5. Press **F12** in-game for the emulator menu.
+
+Full instructions, including the 60 FPS patch and updating: [docs/BUILDING.md](docs/BUILDING.md).
 
 ### Restoring original presentation
 
@@ -105,14 +112,15 @@ Set any of these to `0` to show that feature as the 3DS draws it:
 
 | Path | Contents |
 | --- | --- |
-| `tools/zakuro` | Zakuro fork: hooks and frontend |
-| `tools/3dsrecomp` | Recompiler |
+| `tools/zakuro` | Zakuro fork (submodule): hooks and frontend |
+| `tools/3dsrecomp` | 3dsrecomp fork (submodule): recompiler |
 | `tools/kiutrace` | Headless test & benchmark harness |
 | `tools/funclist` | Function list export for Ghidra |
 | `ghidra/` | Headless analysis scripts |
 | `overrides/` | C overrides |
 | `scripts/` | Benchmarks, IPS builder, image conversion |
 | `analysis/` | `FINDINGS.md` (addresses), `PERFORMANCE.md` |
+| `docs/BUILDING.md` | Building from source |
 | `docs/adr/` | Design decisions |
 | `GLOSSARY.md` | Project terminology |
 

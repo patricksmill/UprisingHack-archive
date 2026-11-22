@@ -11,9 +11,11 @@ dist/
 ghidra/project/
 ghidra/modproject/
 ghidra/reports/
-# other people's repos and big downloads; ours are listed below
+# other people's repos and big downloads; ours and the submodules are listed below
 tools/*
 !tools/kiutrace/
+!tools/zakuro
+!tools/3dsrecomp
 !tools/funclist/
 tools/kiutrace/target/
 tools/funclist/target/
