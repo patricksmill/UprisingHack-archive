@@ -78,20 +78,41 @@ Only a handful of game functions are hooked; everything else runs as the origina
 > [!IMPORTANT]
 > You must provide your own **decrypted** dump of Kid Icarus: Uprising (USA). No game data is included or distributed.
 
-1. Install Rust 1.95+ and, on Linux, the packages listed in [Building](docs/BUILDING.md#1-install-the-prerequisites).
-2. Clone with submodules (the Zakuro and 3dsrecomp forks live in `tools/`):
-   ```sh
-   git clone --recursive https://github.com/patricksmill/UprisingHack
-   cd UprisingHack
-   ```
-3. Build and launch:
-   ```sh
-   cargo run --release --manifest-path tools/zakuro/Cargo.toml -p zakuro -- path/to/kiu.cci
-   ```
-4. Press **Recompile** in the library. It takes about ten minutes and needs a C compiler (Zakuro offers to download one). Recompile once, and again after each update.
-5. Press **F12** in-game for the emulator menu.
+### Prerequisites
 
-Full instructions, including the 60 FPS patch and updating: [docs/BUILDING.md](docs/BUILDING.md).
+- [Rust](https://rustup.rs) (stable) and a C compiler.
+- **Linux:** `cmake`, `pkg-config`, and the ALSA and udev development files. On Debian, Ubuntu and Mint:
+  ```sh
+  sudo apt install build-essential cmake pkg-config libasound2-dev libudev-dev
+  ```
+- **Windows:** MinGW-w64 gcc (through MSYS2 or WinLibs) and CMake.
+
+### Build
+
+The Zakuro and 3dsrecomp forks are submodules in `tools/`, side by side. Zakuro finds 3dsrecomp at `tools/3dsrecomp`.
+
+1. Clone this repository with its submodules:
+   ```sh
+   git clone --recursive https://github.com/patricksmill/UprisingHack icarus
+   cd icarus
+   ```
+   Already cloned without `--recursive`? Run `git submodule update --init`.
+2. Place your dump at `dumps/kiu.cci`.
+3. Build and open the library:
+   ```sh
+   cargo run --release --manifest-path tools/zakuro/Cargo.toml -p zakuro
+   ```
+4. Press **Choose folder…**, pick `dumps/`, and press **Recompile** next to the game. Do this once, and again after each update. If Zakuro finds no C compiler, it offers to download one.
+5. Launch the game from the library, or straight from the command line:
+   ```sh
+   cargo run --release --manifest-path tools/zakuro/Cargo.toml -p zakuro -- dumps/kiu.cci
+   ```
+   Until you recompile, the game runs in the interpreter, which is much slower.
+6. Press **F12** in-game for the emulator menu.
+
+To update, run `git pull` and `git submodule update --init`, rebuild, then recompile.
+
+More detail, including the 60 FPS patch and working on the forks: [docs/BUILDING.md](docs/BUILDING.md).
 
 ### Restoring original presentation
 

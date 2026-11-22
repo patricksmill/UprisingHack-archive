@@ -14,11 +14,10 @@ by side under `tools/`. The submodules do that for you.
 
 ## 1. Install the prerequisites
 
-All platforms need [git](https://git-scm.com/) and Rust 1.95 or newer from
-[rustup](https://rustup.rs/).
+All platforms need [git](https://git-scm.com/), stable Rust (1.95 or newer)
+from [rustup](https://rustup.rs/), and a C compiler.
 
-**Windows:** rustup offers to install the Visual Studio C++ build tools.
-Accept, and nothing else is needed.
+**Windows:** MinGW-w64 gcc (through MSYS2 or WinLibs) and CMake.
 
 **Linux (Debian, Ubuntu, Mint):**
 
@@ -47,20 +46,22 @@ git submodule update --init
 
 ## 3. Build and run
 
+You need your own **decrypted** dump of Kid Icarus: Uprising (USA,
+`0004000000030100`), as `.cci` or `.3ds`. Place it at `dumps/kiu.cci`, then
+build and open the library:
+
 ```sh
-cargo run --release --manifest-path tools/zakuro/Cargo.toml -p zakuro -- path/to/kiu.cci
+cargo run --release --manifest-path tools/zakuro/Cargo.toml -p zakuro
 ```
 
 The first build takes several minutes. The executable ends up in
-`tools/zakuro/target/release/` (`zakuro.exe` on Windows).
-
-You need your own **decrypted** dump of Kid Icarus: Uprising (USA,
-`0004000000030100`), as `.cci` or `.3ds`. Without a path, Zakuro opens its
-library, where you pick the folder holding your games.
+`tools/zakuro/target/release/` (`zakuro.exe` on Windows). To launch the
+game directly, pass the dump: `... -p zakuro -- dumps/kiu.cci`.
 
 ## 4. Recompile the game
 
-In the library, press **Recompile** next to the game. It takes around ten
+In the library, press **Choose folder…**, pick `dumps/`, and press
+**Recompile** next to the game. It takes around ten
 minutes and needs a C compiler. Zakuro uses gcc or clang when it finds one,
 and otherwise offers to download Zig into its own folder. Recompile again
 after each update to the port. Until then the game runs in the interpreter,
@@ -72,7 +73,7 @@ The patch is generated from your own `code.bin`, after the script checks
 that the words it changes are the original ones:
 
 ```sh
-python3 scripts/extract_cci.py path/to/kiu.cci build/kiu
+python3 scripts/extract_cci.py dumps/kiu.cci build/kiu
 python3 scripts/make_60fps_ips.py build/kiu/code.bin build/code.ips
 ```
 
