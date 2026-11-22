@@ -1,0 +1,109 @@
+# Builds the port from the pinned submodules on Windows and Linux.
+# Every push and pull request builds and tests; a v* tag also packs,
+# smoke-launches and publishes a GitHub release. Tags with a hyphen
+# (v0.1.0-pre) are published as prereleases.
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows-x86_64
+          # an old distro, since programs run on systems as new as their build box or newer
+          - os: ubuntu-latest
+            container: ubuntu:22.04
+            platform: linux-x86_64
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+    defaults:
+      run:
+        # rust-toolchain.toml is read from here, not from --manifest-path
+        working-directory: tools/zakuro
+    steps:
+      - name: Tools and library headers
+        if: runner.os == 'Linux'
+        working-directory: .
+        run: |
+          apt-get update
+          apt-get install -y build-essential ca-certificates clang cmake curl file git libasound2-dev libudev-dev pkg-config fonts-noto-cjk
+          curl -fsSL https://sh.rustup.rs | sh -s -- -y --default-toolchain none
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools/zakuro
+      - run: cargo build --release --locked -p zakuro
+      - run: cargo test --release --locked --workspace
+
+      - name: Name the archive
+        id: name
+        shell: bash
+        working-directory: .
+        run: echo "base=${{ github.event.repository.name }}-${{ github.ref_type == 'tag' && github.ref_name || github.sha }}-${{ matrix.platform }}" >> "$GITHUB_OUTPUT"
+      # each archive is launched once packed: the log shows whether the GPU starts, and the job fails if the program doesn't
+      - name: Pack for Windows
+        if: runner.os == 'Windows'
+        working-directory: .
+        run: |
+          New-Item -ItemType Directory pack | Out-Null
+          Copy-Item tools/zakuro/target/release/zakuro.exe, README.md pack/
+          Copy-Item tools/zakuro/LICENSE pack/LICENSE-zakuro.txt
+          Compress-Archive -Path pack/* -DestinationPath ${{ steps.name.outputs.base }}.zip
+          $env:RUST_LOG = 'info'
+          pack/zakuro.exe --test-pattern --headless 1 --mute
+      - name: Pack for Linux
+        if: runner.os == 'Linux'
+        working-directory: .
+        run: |
+          mkdir pack
+          cp tools/zakuro/target/release/zakuro README.md pack/
+          cp tools/zakuro/LICENSE pack/LICENSE-zakuro
+          tar czf ${{ steps.name.outputs.base }}.tar.gz -C pack .
+          RUST_LOG=info pack/zakuro --test-pattern --headless 1 --mute
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.platform }}
+          path: |
+            ${{ steps.name.outputs.base }}.zip
+            ${{ steps.name.outputs.base }}.tar.gz
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          cat > notes.md <<'NOTES'
+          On Windows, unzip the windows-x86_64 archive and run zakuro.exe. On Linux, extract the linux-x86_64 archive and run ./zakuro; it needs the ALSA library (libasound2 on Debian and Ubuntu). Linux builds are untested.
+
+          You need your own decrypted dump of Kid Icarus: Uprising (USA, 0004000000030100). Press Recompile next to the game in the library before playing, and again after each update: it takes about ten minutes and needs a C compiler, which Zakuro offers to download if you have none.
+          NOTES
+          prerelease=
+          case "$TAG" in *-*) prerelease=--prerelease ;; esac
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag $prerelease --title "$TAG" --notes-file notes.md --generate-notes
