@@ -1,7 +1,8 @@
 # Builds the port from the pinned submodules on Windows and Linux.
-# Every push and pull request builds and tests; a v* tag also packs,
-# smoke-launches and publishes a GitHub release. Tags with a hyphen
-# (v0.1.0-pre) are published as prereleases.
+# Every push and pull request builds and tests, with debug info; a v* tag
+# builds without debug info, then packs, smoke-launches and publishes a
+# GitHub release. Tags with a hyphen (v0.1.0-pre) are published as
+# prereleases.
 name: Build
 
 on:
@@ -47,6 +48,13 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: tools/zakuro
+      # branch and pull request builds keep the fork's debug = 1; releases ship without it
+      - name: Drop debug info from tagged builds
+        if: github.ref_type == 'tag'
+        shell: bash
+        run: |
+          echo "CARGO_PROFILE_RELEASE_DEBUG=false" >> "$GITHUB_ENV"
+          echo "CARGO_PROFILE_RELEASE_STRIP=debuginfo" >> "$GITHUB_ENV"
       - run: cargo build --release --locked -p zakuro
       - run: cargo test --release --locked --workspace
 
